@@ -2,7 +2,8 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>PA#1</title>
+<title>PA#2</title>
+
 <style>
     body {
         background-color: #402666;
@@ -10,15 +11,34 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column; 
-        justify-content: flex-start;
         align-items: center; 
         padding-top: 20px; 
+        color: #fff;
+        font-family: Arial, sans-serif;
     }
 
     h1 {
         color: #fff;
         text-align: center;
         margin-bottom: 20px;
+    }
+
+    #controls {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 25px;
+        font-size: 18px;
+    }
+
+    #controls label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #fff;
+    }
+
+    #controls input[type=range] {
+        width: 150px;
     }
 
     #canvas-holder {
@@ -41,9 +61,25 @@
 <script src="./main.js"></script>
 
 </head>
+
 <body onload="init()">
 
     <h1>Conjugation of Two Coaxial Cylinders of Different Diameters</h1>
+
+    <!-- NEW CONTROLS -->
+    <div id="controls">
+        <label>
+            U steps:
+            <input id="uSlider" type="range" min="3" max="200" value="40" 
+                   oninput="updateUSteps(this.value)">
+        </label>
+
+        <label>
+            V steps:
+            <input id="vSlider" type="range" min="3" max="200" value="40" 
+                   oninput="updateVSteps(this.value)">
+        </label>
+    </div>
 
     <div id="canvas-holder">
        <canvas width="600" height="600" id="webglcanvas"></canvas>
@@ -51,3 +87,4 @@
 
 </body>
 </html>
+
