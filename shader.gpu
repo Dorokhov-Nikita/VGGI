@@ -1,0 +1,85 @@
+var vertexShaderSource = `
+attribute vec3 vertex;
+attribute vec3 normal;
+attribute vec2 texCoord;
+attribute vec3 tangent;
+
+uniform mat4 ModelViewMatrix;
+uniform mat4 ModelViewProjectionMatrix;
+uniform mat4 NormalMatrix;
+
+varying vec3 v_viewPos;
+varying vec2 v_texCoord;
+varying mat3 v_TBN;
+
+void main() {
+    vec4 viewPos4 = ModelViewMatrix * vec4(vertex, 1.0);
+    v_viewPos = viewPos4.xyz;
+    
+    v_texCoord = texCoord;
+    
+    vec3 N = normalize((NormalMatrix * vec4(normal, 0.0)).xyz);
+    vec3 T = normalize((NormalMatrix * vec4(tangent, 0.0)).xyz);
+    
+    T = normalize(T - dot(T, N) * N);
+    
+    vec3 B = cross(N, T);
+    
+    v_TBN = mat3(T, B, N);
+    
+    gl_Position = ModelViewProjectionMatrix * vec4(vertex, 1.0);
+}
+`;
+
+var fragmentShaderSource = `
+precision mediump float;
+
+uniform vec3 u_lightPosition;
+uniform sampler2D u_diffuseTexture;
+uniform sampler2D u_specularTexture;
+uniform sampler2D u_normalTexture;
+
+varying vec3 v_viewPos;
+varying vec2 v_texCoord;
+varying mat3 v_TBN;
+
+void main() {
+    vec4 diffuseSample = texture2D(u_diffuseTexture, v_texCoord);
+    vec4 specularSample = texture2D(u_specularTexture, v_texCoord);
+    vec4 normalSample = texture2D(u_normalTexture, v_texCoord);
+    
+    vec3 diffuseColor = diffuseSample.rgb;
+    float specularMask = specularSample.r;
+    
+    vec3 tangentNormal = normalSample.xyz;
+    tangentNormal = tangentNormal * 2.0 - 1.0;
+    tangentNormal = normalize(tangentNormal);
+    
+    vec3 N = normalize(v_TBN * tangentNormal);
+    
+    vec3 L = normalize(u_lightPosition - v_viewPos);
+    
+    vec3 V = normalize(-v_viewPos);
+    
+    vec3 R = reflect(-L, N);
+    
+    vec3 ambientColor = vec3(0.15, 0.15, 0.2);
+    vec3 lightColor = vec3(1.0, 1.0, 0.95);
+    float shininess = 64.0;
+    
+    float diff = max(dot(N, L), 0.0);
+    
+    float spec = 0.0;
+    if (diff > 0.0) {
+        spec = pow(max(dot(V, R), 0.0), shininess);
+    }
+    
+    vec3 ambient = ambientColor * diffuseColor;
+    vec3 diffuse = lightColor * diffuseColor * diff;
+    vec3 specular = lightColor * spec * specularMask;
+    
+    vec3 finalColor = ambient + diffuse + specular;
+    
+    gl_FragColor = vec4(finalColor, 1.0);
+}
+`;
