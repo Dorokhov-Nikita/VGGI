@@ -12,11 +12,19 @@ varying vec3 v_viewPos;
 varying vec2 v_texCoord;
 varying mat3 v_TBN;
 
+uniform vec2 u_rotationCenter;
+uniform float u_textureRotation;
+
 void main() {
     vec4 viewPos4 = ModelViewMatrix * vec4(vertex, 1.0);
     v_viewPos = viewPos4.xyz;
     
-    v_texCoord = texCoord;
+    vec2 tc = texCoord - u_rotationCenter;
+    float cosA = cos(u_textureRotation);
+    float sinA = sin(u_textureRotation);
+    mat2 rotMat = mat2(cosA, -sinA, sinA, cosA);
+    tc = rotMat * tc;
+    v_texCoord = tc + u_rotationCenter;
     
     vec3 N = normalize((NormalMatrix * vec4(normal, 0.0)).xyz);
     vec3 T = normalize((NormalMatrix * vec4(tangent, 0.0)).xyz);
