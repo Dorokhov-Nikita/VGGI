@@ -12,6 +12,9 @@ let diffuseTexture;
 let specularTexture;
 let normalTexture;
 
+let rotationCenter = { u: 0.5, v: 0.5 };
+let textureRotation = 0.0;
+
 // Texture loading with error handling
 function loadTexture(url, name) {
     const texture = gl.createTexture();
@@ -95,8 +98,40 @@ function createProceduralTexture(texture, name) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 }
 
+function handleKeyDown(event) {    
+    const step = 0.05;
+    
+    switch(event.key.toLowerCase()) {
+        case 'a':
+            rotationCenter.u = Math.max(0, rotationCenter.u - step);
+            event.preventDefault();
+            break;
+        case 'd':
+            rotationCenter.u = Math.min(1, rotationCenter.u + step);
+            event.preventDefault();
+            break;
+        case 'w':
+            rotationCenter.v = Math.max(0, rotationCenter.v - step);
+            event.preventDefault();
+            break;
+        case 's':
+            rotationCenter.v = Math.min(1, rotationCenter.v + step);
+            event.preventDefault();
+            break;
+        case 'q':
+            textureRotation -= 0.1;
+            event.preventDefault();
+            break;
+        case 'e':
+            textureRotation += 0.1;
+            event.preventDefault();
+            break;
+    }
+}
+
 // Init WEBGL
 function initGL() {
+    
     let prog = createProgram(gl, vertexShaderSource, fragmentShaderSource);
     
     shProgram = new ShaderProgram("Basic", prog);
@@ -116,6 +151,9 @@ function initGL() {
     shProgram.iSpecularTexture = gl.getUniformLocation(prog, "u_specularTexture");
     shProgram.iNormalTexture = gl.getUniformLocation(prog, "u_normalTexture");
 
+    shProgram.iRotationCenter = gl.getUniformLocation(prog, "u_rotationCenter");
+    shProgram.iTextureRotation = gl.getUniformLocation(prog, "u_textureRotation");
+
     gl.enable(gl.DEPTH_TEST);
 
     diffuseTexture = loadTexture("diffuse.jpg", "diffuse");
@@ -126,6 +164,7 @@ function initGL() {
     rebuildSurface();
 
     spaceball = new TrackballRotator(canvas, draw, 0);
+    
 }
 
 // Model class
@@ -312,8 +351,6 @@ function rebuildSurface() {
 }
 
 function draw() {
-    requestAnimationFrame(draw);
-
     gl.clearColor(0.25, 0.15, 0.4, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -345,6 +382,9 @@ function draw() {
 
     gl.uniform3fv(shProgram.iLightPosition, lightView);
 
+    gl.uniform2f(shProgram.iRotationCenter, rotationCenter.u, rotationCenter.v);
+    gl.uniform1f(shProgram.iTextureRotation, textureRotation);
+
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
     gl.uniform1i(shProgram.iDiffuseTexture, 0);
@@ -358,6 +398,7 @@ function draw() {
     gl.uniform1i(shProgram.iNormalTexture, 2);
 
     surface.Draw();
+    requestAnimationFrame(draw);
 }
 
 function updateUSteps(v) {
@@ -400,12 +441,7 @@ function ShaderProgram(name, program) {
 function init() {
     canvas = document.getElementById("webglcanvas");
     gl = canvas.getContext("webgl");
-    
     initGL();
-
-    canvas.addEventListener("wheel", (event) => {
-        event.preventDefault();
-    });
-
+    document.addEventListener('keydown', handleKeyDown);
     requestAnimationFrame(draw);
 }
